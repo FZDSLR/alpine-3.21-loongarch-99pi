@@ -1,0 +1,22 @@
+#!/bin/sh
+
+mkinitfs -o /tmp/initramfs -b / 6.9.0-rc7+
+
+mkimage-la -n initramfs -A loongarch -O linux -T ramdisk -C none -d /tmp/initramfs /boot/initramfs
+
+rm -f /tmp/initramfs
+
+if [ ! -f "/boot/boot.cmd" ]; then
+    cat > /boot/boot.cmd << EOF
+setenv kernel_addr 0x9000000002000000
+setenv initrd_addr 0x9000000004000000
+fatload usb 0:1 \${kernel_addr} /uImage
+fatload usb 0:1 \${initrd_addr} /initramfs
+setenv bootargs initrd=\${initrd_addr} root=LABEL=ALPINE_ROOT rootfstype=ext4 rootwait rw rootdelay=5 init=/sbin/init console=ttyS0,115200
+bootm \${kernel_addr} \${initrd_addr}
+EOF
+fi
+
+mkimage-la -C none -A loongarch -T script -d /boot/boot.cmd /boot/boot.scr
+
+exit 0

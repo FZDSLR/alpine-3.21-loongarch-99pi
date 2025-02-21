@@ -3,7 +3,7 @@
 set -e
 
 IMAGE=image.img
-SIZE=256M
+SIZE=512M
 
 rm -f $IMAGE
 
@@ -16,7 +16,7 @@ dd if=/dev/zero of=$IMAGE bs=1 count=0 seek=$SIZE
   echo p  # 选择主分区
   echo 1  # 分区号
   echo    # 默认起始扇区
-  echo +64M  # 分配 512MB 大小
+  echo +128M  # 分配 512MB 大小
   echo n  # 创建另一个新分区
   echo p  # 选择主分区
   echo 2  # 分区号
@@ -25,26 +25,31 @@ dd if=/dev/zero of=$IMAGE bs=1 count=0 seek=$SIZE
   echo w  # 写入并退出
 } | fdisk $IMAGE
 
-UUID_EXT4="7cd65de3-e0be-41d9-b66d-96d749c02da7"
+LABEL_BOOT="BOOT"
+LABEL_ROOT="ALPINE_ROOT"
 
 LOOP_DEV=$(sudo losetup -f -P --show $IMAGE)
 PART1="${LOOP_DEV}p1"
-sudo mkfs.vfat $PART1
+sudo mkfs.vfat -n $LABEL_BOOT $PART1
 
 PART2="${LOOP_DEV}p2"
-sudo mkfs.ext4 -U $UUID_EXT4 $PART2
+sudo mkfs.ext4 -L $LABEL_ROOT $PART2
 
-mkdir -p ./mnt/fat32 ./mnt/ext4
-sudo mount /dev/loop0p1 ./mnt/fat32
-sudo mount /dev/loop0p2 ./mnt/ext4
+tmpdir=$(mktemp -d) || exit 1;
+trap "sudo umount $tmpdir/fat32 $tmpdir/ext4; sudo losetup -d $LOOP_DEV; sudo rm -rf $tmpdir" EXIT;
 
-sudo cp uImage-tfcard mnt/fat32/
-sudo cp uImage-wifi mnt/fat32/
-sudo tar -C ./mnt/ext4 -xvf rootfs.tar
-sudo cp -r modules ./mnt/ext4/lib/
+mkdir -p $tmpdir/fat32 $tmpdir/ext4
+sudo mount ${LOOP_DEV}p1 $tmpdir/fat32
+sudo mount ${LOOP_DEV}p2 $tmpdir/ext4
 
-sudo umount ./mnt/fat32 ./mnt/ext4
+sudo tar -C $tmpdir/ext4 -xf rootfs.tar
 
-sudo losetup -d $LOOP_DEV
+for x in $tmpdir/ext4/boot/*; do
+  if ! [ -L "$x" ]; then sudo mv $x $tmpdir/fat32/; fi
+done
 
-echo "Image file $IMAGE created with two partitions."
+sudo rm -rf $tmpdir/ext4/boot/*
+
+mv $IMAGE image-99pi.img
+
+echo "Image file image-99pi.img created with two partitions."

@@ -2,6 +2,8 @@ sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.
 
 apk add openrc vim openssh alpine-conf fastfetch util-linux e2fsprogs-extra cloud-utils-growpart wpa_supplicant wireless-regdb
 
+apk add /root/linux-99pi.apk
+
 rc-update add devfs boot
 rc-update add procfs boot
 rc-update add sysfs boot
@@ -20,6 +22,15 @@ echo "ttyS0::respawn:/sbin/agetty --autologin root -L 115200 ttyS0 vt100" >> /et
 cat > /etc/network/interfaces << EOF
 auto eth0
 iface eth0 inet dhcp
+EOF
+
+cat > /etc/fstab << EOF
+LABEL=BOOT              /boot           vfat            rw,relatime,fmask=0022,dmask=0022,codepage=936,iocharset=cp936,shortname=mixed,errors=remount-ro    0 2
+
+LABEL=ALPINE_ROOT       /               ext4            rw,relatime     0 1
+
+/dev/cdrom      /media/cdrom    iso9660 noauto,ro 0 0
+/dev/usbdisk    /media/usb      vfat    noauto,ro 0 0
 EOF
 
 echo root:root | chpasswd

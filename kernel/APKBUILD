@@ -1,0 +1,26 @@
+# Maintainer: FZDSLR <FZDSLR@outlook.com>
+pkgname=linux-99pi
+pkgver=6.9.0_rc7
+pkgrel=1
+pkgdesc="loongarch 99pi kernel"
+arch="loongarch64"
+license="MIT"
+url="https://github.com/FZDSLR/alpine-3.21-loongarch-99pi"
+source="./src.tar"
+depends="mkinitfs"
+install="$pkgname.post-install"
+
+package() {
+    install -Dm755 $srcdir/uImage $pkgdir/boot/uImage
+    install -Dm755 $srcdir/mkimage-la $pkgdir/usr/bin/mkimage-la
+    mkdir -p $pkgdir/lib/modules/
+    cp -r $srcdir/lib/modules/* $pkgdir/lib/modules/
+}
+
+check() {
+    :
+}
+
+sha512sums="
+2d998283007c881e828214f73d8859bf6f284069a71efb5a69659b98f375d95ed7962883ea533b0c2b20b33091aa3d8c38cb6f6972bc378405f310f8c22f3851  src.tar
+"
