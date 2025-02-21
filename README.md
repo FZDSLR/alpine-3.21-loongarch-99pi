@@ -7,8 +7,7 @@
 确保 Podman 可用 / Make sure Podman is available
 
 ```bash
-./make_rootfs.sh
-./make_img.sh
+make LINUX_SRC=/your/linx/kernel/src
 ```
 
 ## 如何烧录？ / How to burn?
@@ -16,7 +15,7 @@
 Linux 下： / Under Linux:
 
 ```bash
-dd if=./image.img of=/dev/${Your_USB_Disk} bs=4M
+dd if=./image-99pi.img of=/dev/${Your_USB_Disk} bs=4M
 ```
 
 Windows 下，使用 rufus 等软件进行烧录。/ For Windows, use software like rufus to burn.
@@ -27,20 +26,9 @@ Windows 下，使用 rufus 等软件进行烧录。/ For Windows, use software l
 
 在 Uboot 命令行下： / At the Uboot command line:
 
-### TF 卡版本 / TF-card version
-
 ```
-fatload usb 0:1 0x9000000004000000 /uImage-tfcard
-setenv bootargs root=/dev/sda2 rootfstype=ext4 rootwait rw rootdelay=5 init=/sbin/init console=ttyS0,115200
-bootm 0x9000000004000000
-```
-
-### wifi 版本（手上没板子，未测试）/ wifi version (not tested)
-
-```
-fatload usb 0:1 0x9000000004000000 /uImage-wifi
-setenv bootargs root=/dev/sda2 rootfstype=ext4 rootwait rw rootdelay=5 init=/sbin/init console=ttyS0,115200
-bootm 0x9000000004000000
+fatload usb 0:1 0x9000000003000000 boot.scr;
+source 0x9000000003000000;
 ```
 
 ## 启动系统后的注意事项 / Tips after booting the system
